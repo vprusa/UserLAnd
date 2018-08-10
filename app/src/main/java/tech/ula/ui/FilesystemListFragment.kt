@@ -1,6 +1,7 @@
 package tech.ula.ui
 
 import android.app.Activity
+import android.arch.lifecycle.LifecycleOwner
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
@@ -50,7 +51,7 @@ class FilesystemListFragment : Fragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        filesystemListViewModel.getAllFilesystems().observe(viewLifecycleOwner, filesystemChangeObserver)
+        filesystemListViewModel.getAllFilesystems().observe(this  ,filesystemChangeObserver)
         return inflater.inflate(R.layout.frag_filesystem_list, container, false)
     }
 

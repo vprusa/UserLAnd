@@ -71,6 +71,9 @@ class ServerUtility(private val execUtility: ExecUtility, private val fileUtilit
 
     fun isServerRunning(session: Session): Boolean {
         val targetDirectoryName = session.filesystemId.toString()
+        // may happen that session is corrupted
+        //if(session.pid() == -1L)
+        //    return false
         val command = "../support/isServerInProcTree.sh ${session.pid()}"
         val process = execUtility.wrapWithBusyboxAndExecute(targetDirectoryName, command)
         if (process.exitValue() != 0) // isServerInProcTree returns a 1 if it did't find a server

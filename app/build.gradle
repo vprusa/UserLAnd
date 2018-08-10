@@ -6,12 +6,16 @@ apply plugin: 'kotlin-android-extensions'
 
 apply plugin: 'kotlin-kapt'
 
+kapt {
+    generateStubs = true
+}
+
 android {
-    compileSdkVersion 28
+    compileSdkVersion 26
     defaultConfig {
         applicationId "tech.ula"
         minSdkVersion 21
-        targetSdkVersion 28
+        targetSdkVersion 26
         versionCode 10
         versionName "0.2.3"
 
@@ -32,6 +36,12 @@ android {
     }
     sourceSets {
         androidTest.assets.srcDirs += files("$projectDir/schemas".toString())
+    }
+    /*productFlavors {
+    }
+    buildToolsVersion '28.0.2'
+    */
+    productFlavors {
     }
 }
 

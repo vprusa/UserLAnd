@@ -1,6 +1,7 @@
 package tech.ula.ui
 
 import android.app.Activity
+import android.arch.lifecycle.LifecycleOwner
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
 import android.graphics.Color
@@ -65,7 +66,8 @@ class SessionEditFragment : Fragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        sessionEditViewModel.getAllFilesystems().observe(viewLifecycleOwner, filesystemChangeObserver)
+        sessionEditViewModel.getAllFilesystems().observe(this ,filesystemChangeObserver)
+
         return inflater.inflate(R.layout.frag_session_edit, container, false)
     }
 

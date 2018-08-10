@@ -9,7 +9,7 @@ import tech.ula.model.AppDatabase
 import tech.ula.model.entities.Filesystem
 
 class FilesystemListViewModel(application: Application) : AndroidViewModel(application) {
-    private val appDatabase: AppDatabase by lazy {
+    private val appDatabase: AppDatabase by lazy {  
         AppDatabase.getInstance(application)
     }
 
