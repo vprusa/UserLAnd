@@ -45,6 +45,16 @@ class FilesystemEditFragment : Fragment() {
         FilesystemUtility(execUtility, fileUtility, BuildUtility())
     }
 
+    private fun importFilesystem(): Boolean {
+        try {
+            val backupLocation = "${filesystem.location}.tar.gz"
+            execUtility.extractAndShareFilesystemByLocation(backupLocation, filesystem.location)
+        } catch (e: Exception){
+            Toast.makeText(activityContext, e.message, Toast.LENGTH_LONG).show()
+        }
+        return true
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
@@ -93,6 +103,10 @@ class FilesystemEditFragment : Fragment() {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 filesystem.distributionType = parent?.getItemAtPosition(position).toString()
             }
+        }
+
+        restore_filesystem_button.setOnClickListener {
+
         }
     }
 

@@ -10,6 +10,7 @@ import java.util.ArrayList
 import java.lang.ProcessBuilder
 import kotlin.text.Charsets.UTF_8
 
+
 class ExecUtility(val fileUtility: FileUtility, val preferenceUtility: PreferenceUtility) {
 
     companion object {
@@ -76,9 +77,10 @@ class ExecUtility(val fileUtility: FileUtility, val preferenceUtility: Preferenc
 
     private fun collectOutput(inputStream: InputStream, listener: (String) -> Any) {
         val buf = inputStream.bufferedReader(UTF_8)
-
+        var str : String = ""
         buf.forEachLine {
             listener(it)
+            str += it
         }
 
         buf.close()
@@ -105,5 +107,59 @@ class ExecUtility(val fileUtility: FileUtility, val preferenceUtility: Preferenc
         val command = arrayListOf("../support/busybox", "sh", "-c", commandToWrap)
 
         return execLocal(executionDirectory, command, listener, doWait, wrapped = true)
+    }
+
+
+    fun backupFilesystemByLocation(execDirectory: String, directoryName: String, backupName: String, destinationDir: File) {
+        val backupLocation = "../${backupName}"
+        //launch { kotlinx.coroutines.experimental.async {
+        val backupLocationTmp = "${backupLocation}.tmp"
+        //val exclude = "--exclude=../1/sys --exclude=../1/dev --exclude=../1/proc --exclude=../1/data --exclude=../1/mnt --exclude=../1/host-rootfs --exclude=../1/sdcard --exclude=../1/etc/mtab --exclude=../1/etc/ld.so.preload"
+        val exclude = "--exclude=../1/sys --exclude=../1/dev --exclude=../1/proc --exclude=../1/data --exclude=../1/mnt --exclude=../1/host-rootfs --exclude=../1/sdcard --exclude=../1/etc/mtab --exclude=../1/etc/ld.so.preload"
+        //val command = "rm -rf ${backupLocationTmp} && tar ${exclude} -cvpzf ${backupLocationTmp} ${directoryName} && rm -rf ${backupLocation} && mv ${backupLocationTmp} ${backupLocation}"
+        val command = "rm -rf ${backupLocationTmp} && tar ${exclude} -cvpzf ${backupLocationTmp} ../${directoryName}"
+        // TODO add in progress notification
+        wrapWithBusyboxAndExecute("${execDirectory}", "pwd", doWait = true)
+        wrapWithBusyboxAndExecute("${execDirectory}", command, doWait = true)
+        wrapWithBusyboxAndExecute("${execDirectory}", "rm -rf ${fileUtility.getFilesDirPath()}/${backupName} && mv ${backupLocationTmp} ${backupLocation}", doWait = true)
+        val backupLocationF = File("${fileUtility.getFilesDirPath()}/${backupName}")
+        backupLocationF.copyTo(File(destinationDir, backupName), overwrite = true)
+        //}}
+    }
+
+    fun backupFilesystemByLocation2(execDirectory: String, directory: String, backupLocation: String, destinationDir: File) {
+        //launch { kotlinx.coroutines.experimental.async {
+        val backupLocationTmp = "${backupLocation}.tmp"
+        val exclude = "--exclude=/data/user/0/tech.ula/files/1/sys --exclude=/data/user/0/tech.ula/files/1/dev --exclude=/data/user/0/tech.ula/files/1/proc --exclude=/data/user/0/tech.ula/files/1/data --exclude=/data/user/0/tech.ula/files/1/mnt --exclude=/data/user/0/tech.ula/files/1/host-rootfs --exclude=/data/user/0/tech.ula/files/1/sdcard --exclude=/data/user/0/tech.ula/files/1/etc/mtab --exclude=/data/user/0/tech.ula/files/1/etc/ld.so.preload"
+        val command = "rm -rf ${backupLocationTmp} && tar ${exclude} cvpzf ${backupLocationTmp} ${directory} && rm -rf ${backupLocation} && mv ${backupLocationTmp} ${backupLocation}"
+        // TODO add in progress notification
+        wrapWithBusyboxAndExecute("${execDirectory}", command, doWait = true)
+        val backupLocationF = File("${backupLocation}")
+        backupLocationF.copyTo(destinationDir, overwrite = true)
+        //}}
+    }
+
+    fun compressAndCopyFilesystemByLocation(directory: String, backupLocation: String, destination: String) {
+        //launch { kotlinx.coroutines.experimental.async {
+        val backupLocationTmp = "${backupLocation}.tmp"
+        val command = "rm -rf ${backupLocationTmp} && tar cvpzf ${backupLocationTmp} ${directory} && mv ${backupLocationTmp} ${backupLocation}"
+
+        // TODO add in progress notification
+        wrapWithBusyboxAndExecute("${directory}/support", command, doWait = true)
+        //}}
+        val backupLocationF = File(backupLocation)
+        val destinationF = File(destination)
+        backupLocationF.copyTo(destinationF, overwrite = true)
+        //Files.copy(new Path(backupLocation),destination);
+    }
+
+
+    fun extractAndShareFilesystemByLocation(backupLocation: String, directory: String) {
+        //launch { kotlinx.coroutines.experimental.async {
+        val backupLocationTmp = "${directory}.tmp"
+        val command = "tar xpvzf ${backupLocation} ${backupLocationTmp} && rm -rf ${directory} && mv ${backupLocationTmp} ${backupLocation}"
+        // TODO add in progress notification
+        wrapWithBusyboxAndExecute("${backupLocation}/support", command, doWait = true)
+        //}}
     }
 }

@@ -1,7 +1,6 @@
 package tech.ula.ui
 
 import android.app.Activity
-import android.arch.lifecycle.LifecycleOwner
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
@@ -16,12 +15,28 @@ import tech.ula.R
 import tech.ula.ServerService
 import tech.ula.model.entities.Filesystem
 import tech.ula.viewmodel.FilesystemListViewModel
+import android.net.Uri
+import android.os.Environment
+import tech.ula.utils.* // ktlint-disable no-wildcard-imports
+import android.widget.Toast
+import org.jetbrains.anko.defaultSharedPreferences
+import tech.ula.utils.ExecUtility
+import tech.ula.utils.FileUtility
+
 
 class FilesystemListFragment : Fragment() {
 
     private lateinit var activityContext: Activity
 
     private lateinit var filesystemList: List<Filesystem>
+
+    private val fileUtility: FileUtility by lazy {
+        FileUtility(activityContext.filesDir.path)
+    }
+
+    private val execUtility: ExecUtility by lazy {
+        ExecUtility(fileUtility, PreferenceUtility(activityContext.defaultSharedPreferences))
+    }
 
     private val filesystemListViewModel: FilesystemListViewModel by lazy {
         ViewModelProviders.of(this).get(FilesystemListViewModel::class.java)
@@ -73,6 +88,7 @@ class FilesystemListFragment : Fragment() {
         val filesystem = filesystemList[position]
         return when (item.itemId) {
             R.id.menu_item_filesystem_edit -> editFilesystem(filesystem)
+            R.id.menu_item_filesystem_backup -> backupFilesystem(filesystem)
             R.id.menu_item_filesystem_delete -> deleteFilesystem(filesystem)
             else -> super.onContextItemSelected(item)
         }
@@ -95,4 +111,19 @@ class FilesystemListFragment : Fragment() {
 
         return true
     }
+
+    private fun backupFilesystem(filesystem: Filesystem): Boolean {
+        try {
+            val backupLocation = "${filesystem.id}.tar.gz"
+            execUtility.backupFilesystemByLocation("/support","${filesystem.id}", "${backupLocation}", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS))
+            //execUtility.backupFilesystemByLocation("/support","${fileUtility.getFilesDirPath()}/${filesystem.id}", "${fileUtility.getFilesDirPath()}/${backupLocation}", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS))
+            /*val sharingIntent = Intent(Intent.ACTION_INSERT)
+            val fileUri = Uri.parse(backupLocation)
+            sharingIntent.putExtra(Intent.EXTRA_STREAM, fileUri)
+            startActivity(Intent.createChooser(sharingIntent,  activityContext.getString(R.string.share_image_using)))*/
+        } catch (e: Exception){
+            Toast.makeText(activityContext, e.message, Toast.LENGTH_LONG).show()
+        }
+        return true
+}
 }
