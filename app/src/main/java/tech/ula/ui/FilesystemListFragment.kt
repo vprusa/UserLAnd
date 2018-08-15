@@ -38,6 +38,10 @@ class FilesystemListFragment : Fragment() {
         ExecUtility(fileUtility, PreferenceUtility(activityContext.defaultSharedPreferences))
     }
 
+    private val filesystemUtility: FilesystemUtility by lazy {
+        FilesystemUtility(execUtility, fileUtility, BuildUtility())
+    }
+
     private val filesystemListViewModel: FilesystemListViewModel by lazy {
         ViewModelProviders.of(this).get(FilesystemListViewModel::class.java)
     }
@@ -114,16 +118,13 @@ class FilesystemListFragment : Fragment() {
 
     private fun backupFilesystem(filesystem: Filesystem): Boolean {
         try {
+            // TODO exec only if session is not running and block starting session if backup or restore is in progress
+            // TODO progress notification
             val backupLocation = "${filesystem.id}.tar.gz"
-            execUtility.backupFilesystemByLocation("/support","${filesystem.id}", "${backupLocation}", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS))
-            //execUtility.backupFilesystemByLocation("/support","${fileUtility.getFilesDirPath()}/${filesystem.id}", "${fileUtility.getFilesDirPath()}/${backupLocation}", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS))
-            /*val sharingIntent = Intent(Intent.ACTION_INSERT)
-            val fileUri = Uri.parse(backupLocation)
-            sharingIntent.putExtra(Intent.EXTRA_STREAM, fileUri)
-            startActivity(Intent.createChooser(sharingIntent,  activityContext.getString(R.string.share_image_using)))*/
+            filesystemUtility.backupFilesystemByLocation("/support","${filesystem.id}", "${backupLocation}", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS))
         } catch (e: Exception){
             Toast.makeText(activityContext, e.message, Toast.LENGTH_LONG).show()
         }
         return true
-}
+    }
 }
