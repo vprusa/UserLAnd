@@ -47,16 +47,6 @@ class FilesystemEditFragment : Fragment() {
         FilesystemUtility(execUtility, fileUtility, BuildUtility())
     }
 
-    private fun backupFilesystem(): Boolean {
-        try {
-            val backupLocation = "${filesystem.location}.tar.gz"
-            filesystemUtility.extractAndShareFilesystemByLocation(backupLocation, filesystem.location)
-        } catch (e: Exception){
-            Toast.makeText(activityContext, e.message, Toast.LENGTH_LONG).show()
-        }
-        return true
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
@@ -119,41 +109,22 @@ class FilesystemEditFragment : Fragment() {
         }
     }
 
-    // http://hmkcode.com/android-display-selected-image-and-its-real-path/
-    /*
-    override fun onActivityResult(reqCode: Int, resCode: Int, data: Intent?) {
-        if (resCode == Activity.RESULT_OK && data != null) {
-            val realPath: String
-            // SDK < API11
-            if (Build.VERSION.SDK_INT < 11)
-                realPath = RealPathUtil.getRealPathFromURI_Bx`elowAPI11(this, data.data)
-            else if (Build.VERSION.SDK_INT < 19)
-                realPath = RealPathUtil.getRealPathFromURI_API11to18(this, data.data)
-            else
-                realPath = RealPathUtil.getRealPathFromURI_API19(this, data.data)// SDK > 19 (Android 4.4)
-            // SDK >= 11 && SDK < 19
-            //setTextViews(Build.VERSION.SDK_INT, data.data!!.path, realPath)
-        }
-    }
-    */
-    public override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-
         if (resultCode == RESULT_OK) {
             //Uri return from external activity
             val orgUri = data!!.data
             if (orgUri != null) {
-
-                //path converted from Uri
-                //convertedPath = getRealPathFromURI(orgUri)
-
+                try {
+                    filesystemUtility.restoreFilesystemByLocation("/support",activity = activityContext, backupUri = orgUri, restoreDirName = "${filesystem.id}")
+                } catch (e: Exception) {
+                    Toast.makeText(activityContext, e.message, Toast.LENGTH_LONG).show()
+                }
             } else {
-
+                Toast.makeText(activityContext, R.string.error_restore_no_filesystem, Toast.LENGTH_LONG).show()
             }
         }
-
     }
-
 
     private fun insertFilesystem(): Boolean {
         val navController = NavHostFragment.findNavController(this)

@@ -1,8 +1,19 @@
 package tech.ula.utils
 
+import android.app.Activity
+import android.net.Uri
 import java.io.File
+import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.*
+import android.os.Environment.getExternalStorageDirectory
+import android.content.ContentResolver
+import android.content.Context
+import android.os.Environment
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.io.OutputStream
+
 
 class FilesystemUtility(
     private val execUtility: ExecUtility,
@@ -85,10 +96,54 @@ class FilesystemUtility(
         backupLocationF.copyTo(File(destinationDir, backupName.replace(".tar.gz",fileName)), overwrite = true)
     }
 
-    fun extractAndShareFilesystemByLocation(backupLocation: String, directory: String) {
-        val backupLocationTmp = "${directory}.tmp"
-        val command = "tar xpvzf ${backupLocation} ${backupLocationTmp} && rm -rf ${directory} && mv ${backupLocationTmp} ${backupLocation}"
+    // https://developertip.wordpress.com/2012/12/11/android-copy-file-programmatically-from-its-uri/
+    fun copyFileFromUri(context: Context, saveFilePath: String, fileUri: Uri): Boolean {
+        var inputStream: InputStream? = null
+        var outputStream: OutputStream? = null
+
+        try {
+            val content = context.getContentResolver()
+            inputStream = content.openInputStream(fileUri)
+
+            val root = Environment.getExternalStorageDirectory()
+            if (root == null) {
+                throw Exception("Failed to get root")
+            }
+
+            // create a directory
+            //val saveDirectory = File(Environment.getExternalStorageDirectory().path + File.separator + "directory_name" + File.separator)
+            // create direcotory if it doesn't exists
+            //saveDirectory.mkdirs()
+
+            outputStream = FileOutputStream(saveFilePath)//saveDirectory.path + "f.tar.gz") // filename.png, .mp3, .mp4 ...
+            if (outputStream != null) {
+                //Log.e(TAG, "Output Stream Opened successfully")
+            }
+
+            val buffer = ByteArray(1000)
+            // TODO progress loading could go here
+            while ((inputStream.read(buffer, 0, buffer.size)) >= 0) {
+                outputStream!!.write(buffer, 0, buffer.size)
+            }
+        } catch (e: Exception) {
+            throw e
+        }
+        return true
+    }
+
+    // TODO move to FilesystemListFragment menu
+    fun restoreFilesystemByLocation(execDirectory: String, activity: Activity, backupUri: Uri, restoreDirName: String) {
         // TODO add in progress notification
-        execUtility.wrapWithBusyboxAndExecute("${backupLocation}/support", command, doWait = true)
+        val backupFileName = backupUri.path.substring(backupUri.path.lastIndexOf('/')+1, backupUri.path.length).replace(".tar.gz","")
+        val restoreFileNameTmp = "${backupFileName}.tar.gz.restore.tmp"
+        val restoreDirNameTmp = "${restoreDirName}.restore.tmp"
+        val restoreFileTmp = "${fileUtility.getFilesDirPath()}/${restoreFileNameTmp}"
+        val restoreDirTmp = "${fileUtility.getFilesDirPath()}/${restoreDirNameTmp}"
+        val filesystemDir = "${fileUtility.getFilesDirPath()}/${restoreDirName}"
+        //val backFile = File(URI(backupUri.toString()))
+        val commandExtract = "rm -rf ${restoreDirTmp} && tar xpvzf ${restoreFileTmp} -C ${restoreDirTmp} && rm -rf ${filesystemDir} && mv ${restoreDirTmp} ${filesystemDir}"
+        copyFileFromUri(context = activity, saveFilePath = restoreFileTmp, fileUri = backupUri)
+        //backFile.copyTo(File(restoreFileTmp), overwrite = true)
+        execUtility.wrapWithBusyboxAndExecute(execDirectory, commandExtract, doWait = true)
     }
 }
